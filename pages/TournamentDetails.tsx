@@ -173,19 +173,28 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
     } catch (err) { alert("Failed to save scores."); }
   };
 
-  // --- ROSTER LOGIC ---
+  // --- PLAYER POOL LOGIC ---
   const handleAddToPool = async () => {
     if (!playerSearch) return;
     setIsAddingPlayer(true);
     try {
-      const found = await store.getUserByUsername(playerSearch);
+      const isSearchByUsername = playerSearch.startsWith('@');
+      const searchTerm = isSearchByUsername ? playerSearch.substring(1) : playerSearch;
+      
+      const found = await store.getUserByUsername(searchTerm);
       const newEntry: TournamentPlayer = found 
         ? { id: found.id, name: found.name, username: found.username, isRegistered: true }
         : { name: playerSearch, isRegistered: false };
       
-      const exists = (tournament.playerPool || []).some(p => p.username === newEntry.username || p.name === newEntry.name);
+      // FIXED BUG: Ensure we don't match on undefined usernames for guest players
+      const exists = (tournament.playerPool || []).some(p => {
+        const nameMatch = p.name.toLowerCase() === newEntry.name.toLowerCase();
+        const usernameMatch = (p.username && newEntry.username) && (p.username.toLowerCase() === newEntry.username.toLowerCase());
+        return nameMatch || usernameMatch;
+      });
+
       if (exists) {
-        alert("Player is already in the roster.");
+        alert("Player is already in the list.");
         setPlayerSearch('');
         return;
       }
@@ -207,9 +216,9 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
       for (const line of lines) {
         const parts = line.split(',').map(p => p.trim());
         const name = parts[0];
-        const username = parts[1]?.replace('@', '');
+        const username = parts[1]?.replace('@', '').toLowerCase();
         
-        const exists = newPool.some(p => (username && p.username === username) || p.name === name);
+        const exists = newPool.some(p => (username && p.username?.toLowerCase() === username) || p.name.toLowerCase() === name.toLowerCase());
         if (exists) continue;
 
         let foundUser = username ? await store.getUserByUsername(username) : null;
@@ -224,7 +233,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
   };
 
   const handleDeletePlayerFromPool = async (index: number) => {
-    if (!window.confirm("Remove player from roster?")) return;
+    if (!window.confirm("Remove player from list?")) return;
     const newPool = [...(tournament.playerPool || [])];
     newPool.splice(index, 1);
     await store.updateTournamentPool(tournament.id, newPool);
@@ -238,7 +247,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `${tournament.name}_Roster.csv`; a.click();
+    a.href = url; a.download = `${tournament.name}_Players.csv`; a.click();
   };
 
   const exportRosterToTXT = () => {
@@ -246,7 +255,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
     const blob = new Blob([content], { type: 'text/plain' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `${tournament.name}_Roster.txt`; a.click();
+    a.href = url; a.download = `${tournament.name}_Players.txt`; a.click();
   };
 
   // --- TEAM LOGIC ---
@@ -411,7 +420,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
 
       <div className="flex space-x-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
         <TabButton active={activeTab === 'matches'} onClick={() => setActiveTab('matches')} label="Matches" />
-        <TabButton active={activeTab === 'players'} onClick={() => setActiveTab('players')} label="Roster" />
+        <TabButton active={activeTab === 'players'} onClick={() => setActiveTab('players')} label="Players" />
         <TabButton active={activeTab === 'teams'} onClick={() => setActiveTab('teams')} label="Teams" />
         <TabButton active={activeTab === 'standings'} onClick={() => setActiveTab('standings')} label="Standings" />
         {isOrganizer && <TabButton active={activeTab === 'requests'} onClick={() => setActiveTab('requests')} label="Requests" />}
@@ -517,7 +526,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
       {activeTab === 'players' && (
         <div className="space-y-8 animate-in slide-in-from-bottom-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-slate-950 rounded-[2rem] text-white">
-             <h4 className="text-xl font-black uppercase italic tracking-tighter">Official Roster</h4>
+             <h4 className="text-xl font-black uppercase italic tracking-tighter">Official Tournament Players</h4>
              <div className="flex space-x-2">
                 <button onClick={exportRosterToCSV} className="bg-slate-800 border border-slate-700 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-300">CSV</button>
                 <button onClick={exportRosterToTXT} className="bg-slate-800 border border-slate-700 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-300">TXT</button>
@@ -562,11 +571,11 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
           {showPlayerImport && (
             <div className="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-2xl animate-in zoom-in space-y-4 border border-indigo-400">
                <div className="flex justify-between items-center mb-2">
-                 <h5 className="font-black uppercase italic tracking-tighter text-lg">Matrix Bulk Import</h5>
+                 <h5 className="font-black uppercase italic tracking-tighter text-lg">Matrix Bulk Player Import</h5>
                  <button onClick={() => setShowPlayerImport(false)} className="text-indigo-200 hover:text-white uppercase font-black text-[10px]">Close</button>
                </div>
                <textarea className="w-full h-32 bg-indigo-500 rounded-2xl p-5 font-black text-[11px] outline-none border border-indigo-400 placeholder:text-indigo-200" placeholder="Format: Name, @username (one player per line)" value={bulkPlayerInput} onChange={e => setBulkPlayerInput(e.target.value)} />
-               <button onClick={handleBulkPlayerImport} className="w-full bg-white text-indigo-600 font-black py-4 rounded-2xl uppercase text-[11px] shadow-xl hover:bg-indigo-50 transition-all">Import All to Roster</button>
+               <button onClick={handleBulkPlayerImport} className="w-full bg-white text-indigo-600 font-black py-4 rounded-2xl uppercase text-[11px] shadow-xl hover:bg-indigo-50 transition-all">Import All to Player List</button>
             </div>
           )}
 
