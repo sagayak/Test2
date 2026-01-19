@@ -1,7 +1,9 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Tournament, Match, User, UserRole, MatchStatus, Team, TournamentPlayer, MatchScore, JoinRequest, RankingCriterion } from '../types';
 import { store } from '../services/mockStore';
+import html2canvas from 'https://esm.sh/html2canvas';
+import { jsPDF } from 'https://esm.sh/jspdf';
 
 interface Props {
   tournament: Tournament;
@@ -20,6 +22,10 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
   const [isLocked, setIsLocked] = useState(initialTournament.isLocked);
   const [isJoining, setIsJoining] = useState(false);
   const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportRef = useRef<HTMLDivElement>(null);
   
   // Scoring State
   const [scoringMatch, setScoringMatch] = useState<Match | null>(null);
@@ -186,7 +192,6 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
         ? { id: found.id, name: found.name, username: found.username, isRegistered: true }
         : { name: playerSearch, isRegistered: false };
       
-      // FIXED BUG: Ensure we don't match on undefined usernames for guest players
       const exists = (tournament.playerPool || []).some(p => {
         const nameMatch = p.name.toLowerCase() === newEntry.name.toLowerCase();
         const usernameMatch = (p.username && newEntry.username) && (p.username.toLowerCase() === newEntry.username.toLowerCase());
@@ -256,6 +261,51 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = `${tournament.name}_Players.txt`; a.click();
+  };
+
+  const generateCapture = async () => {
+    if (!exportRef.current) return null;
+    setIsExporting(true);
+    // Temporarily hide buttons for capture
+    const buttons = exportRef.current.querySelectorAll('button');
+    buttons.forEach(b => (b.style.display = 'none'));
+    
+    const canvas = await html2canvas(exportRef.current, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+    
+    buttons.forEach(b => (b.style.display = ''));
+    setIsExporting(false);
+    return canvas;
+  };
+
+  const exportToPDF = async () => {
+    const canvas = await generateCapture();
+    if (!canvas) return;
+    
+    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+    const pdf = new jsPDF({
+      orientation: 'p',
+      unit: 'px',
+      format: [canvas.width, canvas.height]
+    });
+    
+    pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+    pdf.save(`${tournament.name}_Results.pdf`);
+    setShowExportMenu(false);
+  };
+
+  const exportToJPEG = async () => {
+    const canvas = await generateCapture();
+    if (!canvas) return;
+    
+    const link = document.createElement('a');
+    link.download = `${tournament.name}_Results.jpg`;
+    link.href = canvas.toDataURL('image/jpeg', 0.9);
+    link.click();
+    setShowExportMenu(false);
   };
 
   // --- TEAM LOGIC ---
@@ -429,10 +479,31 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
 
       {activeTab === 'matches' && (
         <div className="space-y-8 animate-in slide-in-from-bottom-4">
-          <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+          <div ref={exportRef} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-indigo-50/30 border-l-4 border-indigo-600">
-              <h4 className="text-xl font-black text-indigo-900 uppercase italic tracking-tighter">Match Schedule</h4>
-              <button onClick={() => {}} className="bg-white text-slate-500 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase border border-slate-200 shadow-sm">Export Results</button>
+              <div>
+                <h4 className="text-xl font-black text-indigo-900 uppercase italic tracking-tighter">Match Schedule</h4>
+                {isExporting && <p className="text-[9px] font-black text-indigo-400 animate-pulse mt-1">GENERATING DOCUMENT...</p>}
+              </div>
+              <div className="relative">
+                <button 
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  className="bg-white text-slate-500 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  Export Results
+                </button>
+                {showExportMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 z-50 animate-in zoom-in duration-100">
+                     <button onClick={exportToPDF} className="w-full text-left px-4 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 rounded-xl flex items-center gap-3">
+                        <span className="text-lg">📄</span> Professional PDF
+                     </button>
+                     <button onClick={exportToJPEG} className="w-full text-left px-4 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 rounded-xl flex items-center gap-3">
+                        <span className="text-lg">🖼️</span> High Quality JPEG
+                     </button>
+                  </div>
+                )}
+              </div>
             </div>
             <table className="w-full text-left">
               <thead className="bg-slate-950 text-white">
@@ -451,6 +522,9 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
                     <td className="px-8 py-6 font-bold text-slate-600 text-[11px] whitespace-nowrap">{format12h(m.startTime)}</td>
                     <td className="px-8 py-6 font-black text-slate-800 uppercase italic text-sm">
                       {teams.find(t => t.id === m.participants[0])?.name} vs {teams.find(t => t.id === m.participants[1])?.name}
+                      <div className="text-[9px] text-indigo-500 mt-1 font-bold">
+                        {m.status === MatchStatus.COMPLETED ? m.scores.map(s => `${s.s1}-${s.s2}`).join(' / ') : 'SCHEDULED'}
+                      </div>
                     </td>
                     <td className="px-8 py-6 text-xs font-bold text-slate-500">{m.umpireName || '---'}</td>
                     <td className="px-8 py-6 text-right">
