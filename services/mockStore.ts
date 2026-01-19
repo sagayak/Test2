@@ -31,34 +31,33 @@ class DataService {
   async login(username: string, password: string): Promise<User | null> {
     const normalizedUsername = username.toLowerCase().trim();
     
-    // Emergency Reset / Bypass for SuperAdmin
-    if (normalizedUsername === 'superadmin' && password === 'Pinky@123') {
-      const q = query(collection(db, "users"), where("username", "==", "superadmin"));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        return snap.docs[0].data() as User;
-      }
-    }
-
+    // Attempt standard Firebase Auth first to ensure proper session for security rules
     try {
       const email = normalizedUsername + SHADOW_DOMAIN;
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-        return userDoc.exists() ? (userDoc.data() as User) : null;
-      } catch (authError) {
-        // Fallback for Firestore-only records or bypassed accounts
-        const q = query(collection(db, "users"), where("username", "==", normalizedUsername));
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-          const userData = snapshot.docs[0].data() as User;
-          if (userData.password === password) {
-            return userData;
-          }
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+      return userDoc.exists() ? (userDoc.data() as User) : null;
+    } catch (authError) {
+      // Emergency Reset / Bypass for SuperAdmin
+      if (normalizedUsername === 'superadmin' && password === 'Pinky@123') {
+        const q = query(collection(db, "users"), where("username", "==", "superadmin"));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          return snap.docs[0].data() as User;
         }
-        throw authError;
       }
-    } catch (error) { throw error; }
+
+      // Fallback for Firestore-only records or accounts that failed standard auth
+      const q = query(collection(db, "users"), where("username", "==", normalizedUsername));
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const userData = snapshot.docs[0].data() as User;
+        if (userData.password === password) {
+          return userData;
+        }
+      }
+      throw authError;
+    }
   }
 
   async signup(userData: Omit<User, 'id' | 'credits'>): Promise<User | null> {
@@ -149,7 +148,17 @@ class DataService {
   }
 
   async adjustCredits(userId: string, amount: number, reason: string) {
+    // Note: This operation requires the active user to be a SUPERADMIN in Firestore Security Rules
     await updateDoc(doc(db, "users", userId), { credits: increment(amount) });
+    
+    // Log adjustment
+    await addDoc(collection(db, "creditLogs"), {
+      userId,
+      amount,
+      reason,
+      adminId: auth.currentUser?.uid || 'SYSTEM_BYPASS',
+      timestamp: new Date().toISOString()
+    });
   }
 
   async getTournaments(): Promise<Tournament[]> {

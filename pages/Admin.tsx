@@ -52,8 +52,10 @@ const Admin: React.FC<AdminProps> = ({ user: currentUser }) => {
       setAdjustAmount('0');
       setAdjustReason('Manual adjustment by Admin');
       await loadData();
+      alert("Credits adjusted successfully.");
     } catch (err) {
-      alert("Adjustment failed");
+      console.error(err);
+      alert("Adjustment failed. You may need to re-login to sync security permissions.");
     }
   };
 
@@ -236,7 +238,60 @@ const Admin: React.FC<AdminProps> = ({ user: currentUser }) => {
            </table>
         </div>
       )}
-      {/* Modals remain structurally same but with updated high-contrast borders */}
+
+      {/* Top Up Modal */}
+      {isAdjusting && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-md p-10 shadow-2xl animate-in zoom-in">
+            <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-6">Manual Top Up</h4>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Credits Amount</label>
+                <input 
+                  type="number" 
+                  className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 outline-none font-bold"
+                  value={adjustAmount} 
+                  onChange={e => setAdjustAmount(e.target.value)} 
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Reason / Note</label>
+                <input 
+                  type="text" 
+                  className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 outline-none font-bold"
+                  value={adjustReason} 
+                  onChange={e => setAdjustReason(e.target.value)} 
+                />
+              </div>
+            </div>
+            <div className="flex space-x-3 mt-8">
+              <button onClick={() => setIsAdjusting(null)} className="flex-1 py-4 text-[10px] font-black uppercase text-slate-400 hover:text-slate-600 transition-colors">Cancel</button>
+              <button onClick={handleManualAdjust} className="flex-1 bg-indigo-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase shadow-xl hover:bg-indigo-700 transition-all">Confirm Top Up</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Override Access Modal */}
+      {isResetting && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-md p-10 shadow-2xl animate-in zoom-in">
+            <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-6">Override Access</h4>
+            <p className="text-[11px] text-slate-400 font-bold uppercase mb-6 tracking-tight">Assign a temporary password for @{isResetting.username}</p>
+            <input 
+              type="text" 
+              placeholder="New Temp Password"
+              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 outline-none font-bold"
+              value={tempPassword} 
+              onChange={e => setTempPassword(e.target.value)} 
+            />
+            <div className="flex space-x-3 mt-8">
+              <button onClick={() => setIsResetting(null)} className="flex-1 py-4 text-[10px] font-black uppercase text-slate-400 hover:text-slate-600 transition-colors">Cancel</button>
+              <button onClick={handleCompleteReset} className="flex-1 bg-slate-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase shadow-xl hover:bg-slate-800 transition-all">Complete Reset</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
