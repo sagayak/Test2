@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() { return request.auth != null; }
+    function getRole() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role; }
+    function isOrganizer(orgId) { return request.auth.uid == orgId; }
+
+    match /users/{userId} {
+      allow read: if true; 
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (request.auth.uid == userId || getRole() == 'SUPERADMIN');
+      allow delete: if isSignedIn() && getRole() == 'SUPERADMIN';
+    }
+
+    match /tournaments/{tournamentId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (getRole() == 'SUPERADMIN' || resource.data.organizerId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants']));
+      allow delete: if isSignedIn() && (getRole() == 'SUPERADMIN' || resource.data.organizerId == request.auth.uid);
+    }
+
+    match /teams/{teamId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /matches/{matchId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /creditRequests/{requestId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && getRole() == 'SUPERADMIN';
+      allow delete: if isSignedIn() && getRole() == 'SUPERADMIN';
+    }
+
+    match /joinRequests/{requestId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (getRole() == 'SUPERADMIN' || getRole() == 'ORGANIZER' || get(/databases/$(database)/documents/tournaments/$(resource.data.tournamentId)).data.organizerId == request.auth.uid);
+      allow delete: if isSignedIn() && (getRole() == 'SUPERADMIN' || getRole() == 'ORGANIZER' || get(/databases/$(database)/documents/tournaments/$(resource.data.tournamentId)).data.organizerId == request.auth.uid);
+    }
+
+    match /creditLogs/{logId} {
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.userId || getRole() == 'SUPERADMIN');
+      allow create: if isSignedIn();
+    }
+  }
+}
