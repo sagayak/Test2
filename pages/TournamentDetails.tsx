@@ -480,21 +480,21 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
       {activeTab === 'matches' && (
         <div className="space-y-8 animate-in slide-in-from-bottom-4">
           <div ref={exportRef} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-indigo-50/30 border-l-4 border-indigo-600">
+            <div className="p-8 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-indigo-50/30 border-l-4 border-indigo-600">
               <div>
                 <h4 className="text-xl font-black text-indigo-900 uppercase italic tracking-tighter">Match Schedule</h4>
                 {isExporting && <p className="text-[9px] font-black text-indigo-400 animate-pulse mt-1">GENERATING DOCUMENT...</p>}
               </div>
-              <div className="relative">
+              <div className="relative w-full sm:w-auto">
                 <button 
                   onClick={() => setShowExportMenu(!showExportMenu)}
-                  className="bg-white text-slate-500 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2"
+                  className="w-full sm:w-auto bg-white text-slate-500 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                   Export Results
                 </button>
                 {showExportMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 z-50 animate-in zoom-in duration-100">
+                  <div className="absolute right-0 mt-2 w-full sm:w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 z-50 animate-in zoom-in duration-100">
                      <button onClick={exportToPDF} className="w-full text-left px-4 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 rounded-xl flex items-center gap-3">
                         <span className="text-lg">📄</span> Professional PDF
                      </button>
@@ -505,46 +505,97 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
                 )}
               </div>
             </div>
-            <table className="w-full text-left">
-              <thead className="bg-slate-950 text-white">
-                <tr className="text-[9px] font-black uppercase tracking-[0.2em]">
-                  <th className="px-8 py-5">#</th>
-                  <th className="px-8 py-5">Schedule</th>
-                  <th className="px-8 py-5">Tie-Up</th>
-                  <th className="px-8 py-5">Umpire</th>
-                  <th className="px-8 py-5 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {matches.map((m, idx) => (
-                  <tr key={m.id} className="hover:bg-indigo-50/40 transition-colors group">
-                    <td className="px-8 py-6 font-black text-slate-300 group-hover:text-indigo-600 transition-colors">#{idx+1}</td>
-                    <td className="px-8 py-6 font-bold text-slate-600 text-[11px] whitespace-nowrap">{format12h(m.startTime)}</td>
-                    <td className="px-8 py-6 font-black text-slate-800 uppercase italic text-sm">
-                      {teams.find(t => t.id === m.participants[0])?.name} vs {teams.find(t => t.id === m.participants[1])?.name}
-                      <div className="text-[9px] text-indigo-500 mt-1 font-bold">
-                        {m.status === MatchStatus.COMPLETED ? m.scores.map(s => `${s.s1}-${s.s2}`).join(' / ') : 'SCHEDULED'}
-                      </div>
-                    </td>
-                    <td className="px-8 py-6 text-xs font-bold text-slate-500">{m.umpireName || '---'}</td>
-                    <td className="px-8 py-6 text-right">
-                       {m.status !== MatchStatus.COMPLETED ? (
-                         <button onClick={() => handleOpenScoreboard(m)} className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg active:scale-95 transition-all">Score</button>
-                       ) : (
-                         <span className="text-emerald-500 font-black text-[9px] uppercase italic">Finished</span>
-                       )}
-                    </td>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left min-w-[700px]">
+                <thead className="bg-slate-950 text-white">
+                  <tr className="text-[9px] font-black uppercase tracking-[0.2em]">
+                    <th className="px-8 py-5">#</th>
+                    <th className="px-8 py-5">Schedule</th>
+                    <th className="px-8 py-5">Tie-Up</th>
+                    <th className="px-8 py-5">Umpire</th>
+                    <th className="px-8 py-5 text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {matches.map((m, idx) => (
+                    <tr key={m.id} className="hover:bg-indigo-50/40 transition-colors group">
+                      <td className="px-8 py-6 font-black text-slate-300 group-hover:text-indigo-600 transition-colors">#{idx+1}</td>
+                      <td className="px-8 py-6 font-bold text-slate-600 text-[11px] whitespace-nowrap">{format12h(m.startTime)}</td>
+                      <td className="px-8 py-6 font-black text-slate-800 uppercase italic text-sm">
+                        {teams.find(t => t.id === m.participants[0])?.name} vs {teams.find(t => t.id === m.participants[1])?.name}
+                        <div className="text-[9px] text-indigo-500 mt-1 font-bold">
+                          {m.status === MatchStatus.COMPLETED ? m.scores.map(s => `${s.s1}-${s.s2}`).join(' / ') : 'SCHEDULED'}
+                        </div>
+                      </td>
+                      <td className="px-8 py-6 text-xs font-bold text-slate-500">{m.umpireName || '---'}</td>
+                      <td className="px-8 py-6 text-right">
+                         {m.status !== MatchStatus.COMPLETED ? (
+                           <button onClick={() => handleOpenScoreboard(m)} className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg active:scale-95 transition-all">Score</button>
+                         ) : (
+                           <span className="text-emerald-500 font-black text-[9px] uppercase italic">Finished</span>
+                         )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {matches.map((m, idx) => {
+                const team1 = teams.find(t => t.id === m.participants[0]);
+                const team2 = teams.find(t => t.id === m.participants[1]);
+                return (
+                  <div key={m.id} className="p-6 bg-white space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-black text-slate-300 uppercase italic">Match #{idx+1}</span>
+                      <span className="text-[10px] font-bold text-indigo-600 uppercase">{format12h(m.startTime)}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                       <div className="flex-1">
+                          <h5 className="font-black text-slate-800 uppercase italic text-sm tracking-tight truncate">{team1?.name}</h5>
+                          <h5 className="font-black text-slate-800 uppercase italic text-sm tracking-tight truncate mt-1">{team2?.name}</h5>
+                       </div>
+                       <div className="flex flex-col items-center justify-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Status</span>
+                          <span className={`text-[9px] font-black uppercase italic ${m.status === MatchStatus.COMPLETED ? 'text-emerald-500' : 'text-indigo-500'}`}>
+                            {m.status === MatchStatus.COMPLETED ? 'Done' : 'Live'}
+                          </span>
+                       </div>
+                    </div>
+                    {m.status === MatchStatus.COMPLETED && (
+                      <div className="bg-indigo-50 p-2 rounded-lg text-center">
+                         <span className="text-[10px] font-black text-indigo-700 font-mono">
+                            {m.scores.map(s => `${s.s1}-${s.s2}`).join(' / ')}
+                         </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center pt-2">
+                       <div className="text-[9px] font-bold text-slate-400">
+                          Court {m.court} {m.umpireName && `• Ump: ${m.umpireName}`}
+                       </div>
+                       {m.status !== MatchStatus.COMPLETED ? (
+                         <button onClick={() => handleOpenScoreboard(m)} className="bg-indigo-600 text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase shadow-lg active:scale-95 transition-all">
+                           Score Match
+                         </button>
+                       ) : (
+                         <span className="text-emerald-500 font-black text-[10px] uppercase italic">Match Finished</span>
+                       )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {isOrganizer && (
-            <div className="bg-indigo-600 p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden border border-indigo-500">
-              {!isLocked && <div className="absolute inset-0 bg-indigo-950/80 backdrop-blur-md z-10 flex items-center justify-center p-8 text-center"><p className="font-black uppercase tracking-widest text-sm italic">Arena Lockdown Required to Schedule</p></div>}
+            <div className="bg-indigo-600 p-6 md:p-10 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden border border-indigo-500">
+              {!isLocked && <div className="absolute inset-0 bg-indigo-950/80 backdrop-blur-md z-10 flex items-center justify-center p-8 text-center"><p className="font-black uppercase tracking-widest text-sm italic text-center">Arena Lockdown Required to Schedule</p></div>}
               <h4 className="text-xl font-black uppercase italic tracking-tighter mb-8 border-b border-indigo-500 pb-4">Schedule Tie-Up</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-indigo-200 uppercase tracking-widest ml-1">Select Teams</label>
                   <select value={selectedT1} onChange={e => setSelectedT1(e.target.value)} className="w-full p-4 bg-indigo-500 rounded-2xl font-black text-xs uppercase outline-none border border-indigo-400">
@@ -568,7 +619,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-6">
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-indigo-200 uppercase tracking-widest ml-1">Format (Best of)</label>
                   <div className="flex space-x-2">
@@ -608,8 +659,8 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
              </div>
           </div>
           
-          <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-             <table className="w-full text-left">
+          <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden overflow-x-auto">
+             <table className="w-full text-left min-w-[600px]">
                 <thead className="bg-slate-950 text-white">
                    <tr className="text-[9px] font-black uppercase tracking-[0.2em]">
                       <th className="px-8 py-5">Player Details</th>
@@ -654,9 +705,9 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
           )}
 
           {isOrganizer && !isLocked && (
-            <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm flex gap-4">
+            <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4">
               <input type="text" placeholder="Add player (name or @username)" className="flex-1 p-4 bg-slate-50 rounded-2xl font-black outline-none focus:bg-white border-2 border-transparent focus:border-indigo-500 transition-all" value={playerSearch} onChange={e => setPlayerSearch(e.target.value)} />
-              <button onClick={handleAddToPool} disabled={isAddingPlayer || !playerSearch} className="bg-slate-900 text-white px-10 rounded-2xl font-black uppercase text-[10px] shadow-xl hover:bg-indigo-600 transition-all">Add Player</button>
+              <button onClick={handleAddToPool} disabled={isAddingPlayer || !playerSearch} className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black uppercase text-[10px] shadow-xl hover:bg-indigo-600 transition-all">Add Player</button>
             </div>
           )}
         </div>
@@ -665,7 +716,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
       {activeTab === 'teams' && (
         <div className="space-y-8 animate-in slide-in-from-bottom-4">
           {isOrganizer && !isLocked && !activeTeamId && (
-            <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-8">
+            <div className="bg-white p-6 md:p-10 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-8">
               <div className="bg-indigo-50/50 p-4 rounded-2xl border-l-4 border-indigo-600 mb-6">
                  <h4 className="text-[10px] font-black text-indigo-900 uppercase italic tracking-widest leading-none">Draft New Team</h4>
               </div>
@@ -689,16 +740,16 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
           )}
 
           {activeTeamId && selectedTeam ? (
-            <div className="bg-white rounded-[3rem] border border-slate-200 shadow-sm p-12 space-y-12 animate-in zoom-in">
-               <div className="flex items-center justify-between border-b border-slate-100 pb-8">
+            <div className="bg-white rounded-[3rem] border border-slate-200 shadow-sm p-8 md:p-12 space-y-12 animate-in zoom-in">
+               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 pb-8 gap-4">
                   <div>
                      <button onClick={() => setActiveTeamId(null)} className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 hover:text-slate-800 transition-colors">← All Teams</button>
-                     <h3 className="text-5xl font-black text-slate-800 uppercase italic tracking-tighter leading-none">{selectedTeam.name}</h3>
+                     <h3 className="text-4xl md:text-5xl font-black text-slate-800 uppercase italic tracking-tighter leading-none">{selectedTeam.name}</h3>
                   </div>
                   {isOrganizer && <button onClick={() => handleDeleteTeam(selectedTeam.id)} className="bg-rose-50 text-rose-500 px-6 py-3 rounded-xl text-[10px] font-black uppercase shadow-sm hover:bg-rose-500 hover:text-white transition-all">Delete Team</button>}
                </div>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 shadow-inner">
+                  <div className="bg-slate-50 p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-inner">
                      <h5 className="text-[10px] font-black text-slate-500 uppercase mb-6 tracking-widest border-b border-slate-200 pb-2">Active Lineup</h5>
                      <div className="space-y-3">
                         {selectedTeam.customPlayerNames?.map(p => (
@@ -709,7 +760,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
                         ))}
                      </div>
                   </div>
-                  <div className="bg-indigo-600 p-8 rounded-[2rem] border border-indigo-500 shadow-xl text-white">
+                  <div className="bg-indigo-600 p-6 md:p-8 rounded-[2rem] border border-indigo-500 shadow-xl text-white">
                      <h5 className="text-[10px] font-black text-indigo-200 uppercase mb-6 tracking-widest border-b border-indigo-500 pb-2">Performance Metrics</h5>
                      <div className="grid grid-cols-2 gap-4">
                         <div className="bg-indigo-700/50 p-6 rounded-3xl text-center"><p className="text-3xl font-black italic">{selectedTeamHistory.length}</p><p className="text-[9px] font-black text-indigo-300 uppercase mt-1">Played</p></div>
@@ -721,7 +772,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
                </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {teams.map(t => (
                 <button key={t.id} onClick={() => setActiveTeamId(t.id)} className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm group hover:border-indigo-400 hover:shadow-2xl transition-all text-left transform hover:-translate-y-1">
                    <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center font-black text-indigo-400 mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-all">{t.name[0]}</div>
@@ -735,11 +786,11 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
       )}
 
       {activeTab === 'standings' && (
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden animate-in zoom-in">
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden animate-in zoom-in overflow-x-auto">
            <div className="p-8 bg-slate-950 text-white border-l-4 border-indigo-600">
               <h4 className="text-xl font-black uppercase italic tracking-tighter leading-none">Global Rankings</h4>
            </div>
-           <table className="w-full text-left">
+           <table className="w-full text-left min-w-[500px]">
             <thead className="bg-slate-900 text-white">
               <tr className="text-[9px] font-black uppercase tracking-[0.2em]">
                 <th className="px-10 py-6">Rank</th>
@@ -768,11 +819,11 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
         <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm divide-y divide-slate-100 animate-in fade-in overflow-hidden">
           <div className="p-6 bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest">Entry Authorization Queue</div>
           {joinRequests.map(req => (
-            <div key={req.id} className="p-8 flex items-center justify-between hover:bg-slate-50 transition-colors">
+            <div key={req.id} className="p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-slate-50 transition-colors gap-4">
               <div><p className="font-black text-slate-800 italic uppercase leading-none text-sm">{req.name}</p><p className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">@{req.username}</p></div>
-              <div className="flex space-x-3">
-                <button onClick={() => handleResolveJoinRequest(req.id, req.username, true)} disabled={processingRequestId === req.id} className="bg-indigo-600 text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase shadow-lg active:scale-95 disabled:opacity-50 transition-all">Accept</button>
-                <button onClick={() => handleResolveJoinRequest(req.id, req.username, false)} disabled={processingRequestId === req.id} className="bg-slate-100 text-slate-400 px-8 py-3 rounded-xl text-[10px] font-black uppercase hover:bg-rose-50 transition-all">Decline</button>
+              <div className="flex space-x-3 w-full sm:w-auto">
+                <button onClick={() => handleResolveJoinRequest(req.id, req.username, true)} disabled={processingRequestId === req.id} className="flex-1 sm:flex-none bg-indigo-600 text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase shadow-lg active:scale-95 disabled:opacity-50 transition-all">Accept</button>
+                <button onClick={() => handleResolveJoinRequest(req.id, req.username, false)} disabled={processingRequestId === req.id} className="flex-1 sm:flex-none bg-slate-100 text-slate-400 px-8 py-3 rounded-xl text-[10px] font-black uppercase hover:bg-rose-50 transition-all">Decline</button>
               </div>
             </div>
           ))}
@@ -781,8 +832,8 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
       )}
 
       {activeTab === 'settings' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-bottom-4">
-          <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in slide-in-from-bottom-4">
+          <div className="bg-white p-6 md:p-10 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-8">
             <div className="bg-slate-900 p-4 rounded-2xl text-white mb-6">
                  <h4 className="text-[10px] font-black uppercase tracking-widest italic leading-none">Arena Core Configuration</h4>
             </div>
@@ -791,7 +842,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1 block italic">Security Access PIN</label>
                  <div className="flex gap-2">
                    <input type="text" maxLength={4} placeholder="####" className="flex-1 p-4 bg-slate-50 rounded-2xl text-center text-2xl font-black outline-none border-2 border-transparent focus:border-indigo-500" value={tempPin} onChange={e => setTempPin(e.target.value)} />
-                   <button onClick={handleUpdatePin} className="bg-slate-950 text-white px-8 rounded-2xl font-black uppercase text-[10px] shadow-xl hover:bg-indigo-600 transition-all">Save PIN</button>
+                   <button onClick={handleUpdatePin} className="bg-slate-950 text-white px-6 md:px-8 rounded-2xl font-black uppercase text-[10px] shadow-xl hover:bg-indigo-600 transition-all">Save</button>
                  </div>
               </div>
               <div className="pt-4">
@@ -801,7 +852,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
                      <div key={criterion} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group">
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">{idx + 1}. {criterion.replace(/_/g, ' ')}</span>
                         {isOrganizer && (
-                          <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex space-x-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                             <button onClick={() => handleReorderCriteria(idx, 'up')} disabled={idx === 0} className="p-2 hover:bg-slate-200 rounded-lg text-slate-400 disabled:opacity-30">↑</button>
                             <button onClick={() => handleReorderCriteria(idx, 'down')} disabled={idx === 3} className="p-2 hover:bg-slate-200 rounded-lg text-slate-400 disabled:opacity-30">↓</button>
                           </div>
@@ -813,7 +864,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
             </div>
           </div>
           {isOrganizer && (
-            <div className="bg-rose-50 p-10 rounded-[2.5rem] border border-rose-100 flex flex-col justify-between shadow-xl">
+            <div className="bg-rose-50 p-6 md:p-10 rounded-[2.5rem] border border-rose-100 flex flex-col justify-between shadow-xl">
               <div><h4 className="text-[10px] font-black text-rose-500 uppercase italic tracking-widest mb-4">Danger Zone</h4><p className="text-[10px] font-bold text-rose-400 uppercase leading-relaxed tracking-tight">Permanently delete this arena and all associated matches, teams, and data. This action is irreversible.</p></div>
               <button onClick={handleDeleteArena} className="w-full bg-rose-500 text-white font-black py-5 rounded-2xl uppercase tracking-widest text-[11px] shadow-2xl hover:bg-rose-600 mt-12 transition-all">Delete Arena Permanently</button>
             </div>
@@ -823,26 +874,26 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
 
       {showScoreboard && scoringMatch && (
         <div className="fixed inset-0 bg-[#0c1221] z-[999] flex flex-col animate-in fade-in duration-300 font-sans overflow-hidden">
-          <div className="flex items-center justify-between px-10 py-8">
-            <button onClick={() => setShowScoreboard(false)} className="flex items-center space-x-2 bg-[#1a2333] hover:bg-slate-700 text-slate-300 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg><span>Exit</span></button>
-            <div className="text-center">
-                {matchWinner ? ( <div className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-10 py-2 rounded-full mb-2 animate-pulse"><span className="text-xs font-black uppercase tracking-[0.4em] italic">MATCH DECIDED</span></div> ) : ( <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-4 block italic">Match Progression</span> )}
+          <div className="flex flex-col sm:flex-row items-center justify-between px-6 sm:px-10 py-6 sm:py-8 gap-4 sm:gap-0">
+            <button onClick={() => setShowScoreboard(false)} className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-[#1a2333] hover:bg-slate-700 text-slate-300 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg><span>Exit</span></button>
+            <div className="text-center order-first sm:order-none">
+                {matchWinner ? ( <div className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-6 sm:px-10 py-2 rounded-full mb-2 animate-pulse"><span className="text-xs font-black uppercase tracking-[0.4em] italic text-[8px] sm:text-xs">MATCH DECIDED</span></div> ) : ( <span className="text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-4 block italic">Match Progression</span> )}
                 <div className="flex items-center justify-center space-x-2">
                   {currentScores.map((_, idx) => {
                     const winner = getSetWinner(currentScores[idx], scoringMatch.pointsOption, scoringMatch.goldenPoint);
                     const isActive = activeSetIndex === idx;
                     return (
                       <button key={idx} onClick={() => setActiveSetIndex(idx)} className="flex flex-col items-center transition-all">
-                         <div className={`w-20 h-2 rounded-full mb-2 ${winner === 1 ? 'bg-indigo-500' : winner === 2 ? 'bg-emerald-500' : isActive ? 'bg-white' : 'bg-slate-700'}`}></div>
-                         <span className={`text-[9px] font-black italic transition-all ${isActive ? 'text-white' : 'text-slate-500'}`}>SET {idx + 1} {winner !== 0 && '✔'}</span>
+                         <div className={`w-12 sm:w-20 h-1.5 sm:h-2 rounded-full mb-2 ${winner === 1 ? 'bg-indigo-500' : winner === 2 ? 'bg-emerald-500' : isActive ? 'bg-white' : 'bg-slate-700'}`}></div>
+                         <span className={`text-[8px] sm:text-[9px] font-black italic transition-all ${isActive ? 'text-white' : 'text-slate-500'}`}>SET {idx + 1} {winner !== 0 && '✔'}</span>
                       </button>
                     );
                   })}
                 </div>
             </div>
-            <button onClick={handleUndoScore} className="bg-[#1a2333] text-slate-400 px-8 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all">Undo</button>
+            <button onClick={handleUndoScore} className="hidden sm:block bg-[#1a2333] text-slate-400 px-8 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all">Undo</button>
           </div>
-          <div className="flex-grow flex items-center justify-center gap-10 p-10">
+          <div className="flex-grow flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10 p-6 sm:p-10 overflow-y-auto sm:overflow-hidden">
             {/* T1 Scoring Card */}
             {(() => {
               const displaySide = isSwapped ? 2 : 1;
@@ -854,14 +905,14 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
               const sideColor = displaySide === 1 ? 'bg-[#121931] border-[#4f46e5]/20' : 'bg-[#0a1f1a] border-[#10b981]/20';
               const btnColor = displaySide === 1 ? 'bg-[#4f46e5]' : 'bg-[#10b981]';
               return (
-                <div key="side-1" className={`flex-1 h-full rounded-[4rem] border-2 flex flex-col items-center justify-center relative transition-all duration-700 ${sideColor}`}>
-                  {isSetWon && <div className="absolute top-12 bg-white text-indigo-900 px-6 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest animate-bounce">Set Winner</div>}
-                  <div className="text-center w-full px-10">
-                    <h2 className={`text-5xl font-black text-white uppercase italic tracking-tighter mb-8 ${isOtherWon ? 'opacity-30' : 'opacity-100'}`}>{team?.name}</h2>
-                    <div className="flex items-center justify-center space-x-12">
-                       <button onClick={() => handleUpdateScore(activeSetIndex, displaySide as 1|2, -1)} className="w-32 h-32 rounded-full bg-white/5 border border-white/10 text-slate-400 text-5xl active:scale-90 transition-all">—</button>
-                       <span className={`text-[280px] font-black text-white leading-none italic tabular-nums tracking-tighter ${isOtherWon ? 'opacity-20 scale-90' : 'opacity-100'}`}>{score}</span>
-                       <button disabled={isSetWon || isOtherWon} onClick={() => handleUpdateScore(activeSetIndex, displaySide as 1|2, 1)} className={`w-32 h-32 rounded-full flex items-center justify-center text-6xl text-white ${btnColor} active:scale-90 transition-all disabled:opacity-20`}>+</button>
+                <div key="side-1" className={`w-full md:flex-1 h-1/2 md:h-full rounded-[2rem] sm:rounded-[4rem] border-2 flex flex-col items-center justify-center relative transition-all duration-700 ${sideColor} p-4 sm:p-0`}>
+                  {isSetWon && <div className="absolute top-4 sm:top-12 bg-white text-indigo-900 px-4 sm:px-6 py-1 rounded-full font-black text-[8px] sm:text-[10px] uppercase tracking-widest animate-bounce">Set Winner</div>}
+                  <div className="text-center w-full px-6 sm:px-10">
+                    <h2 className={`text-2xl sm:text-5xl font-black text-white uppercase italic tracking-tighter mb-4 sm:mb-8 ${isOtherWon ? 'opacity-30' : 'opacity-100'} truncate`}>{team?.name}</h2>
+                    <div className="flex items-center justify-center space-x-4 sm:space-x-12">
+                       <button onClick={() => handleUpdateScore(activeSetIndex, displaySide as 1|2, -1)} className="w-12 h-12 sm:w-32 sm:h-32 rounded-full bg-white/5 border border-white/10 text-slate-400 text-xl sm:text-5xl active:scale-90 transition-all">—</button>
+                       <span className={`text-[100px] sm:text-[280px] font-black text-white leading-none italic tabular-nums tracking-tighter ${isOtherWon ? 'opacity-20 scale-90' : 'opacity-100'}`}>{score}</span>
+                       <button disabled={isSetWon || isOtherWon} onClick={() => handleUpdateScore(activeSetIndex, displaySide as 1|2, 1)} className={`w-12 h-12 sm:w-32 sm:h-32 rounded-full flex items-center justify-center text-2xl sm:text-6xl text-white ${btnColor} active:scale-90 transition-all disabled:opacity-20`}>+</button>
                     </div>
                   </div>
                 </div>
@@ -879,28 +930,32 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
               const sideColor = displaySide === 1 ? 'bg-[#121931] border-[#4f46e5]/20' : 'bg-[#0a1f1a] border-[#10b981]/20';
               const btnColor = displaySide === 1 ? 'bg-[#4f46e5]' : 'bg-[#10b981]';
               return (
-                <div key="side-2" className={`flex-1 h-full rounded-[4rem] border-2 flex flex-col items-center justify-center relative transition-all duration-700 ${sideColor}`}>
-                  {isSetWon && <div className="absolute top-12 bg-white text-emerald-900 px-6 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest animate-bounce">Set Winner</div>}
-                  <div className="text-center w-full px-10">
-                    <h2 className={`text-5xl font-black text-white uppercase italic tracking-tighter mb-8 ${isOtherWon ? 'opacity-30' : 'opacity-100'}`}>{team?.name}</h2>
-                    <div className="flex items-center justify-center space-x-12">
-                       <button onClick={() => handleUpdateScore(activeSetIndex, displaySide as 1|2, -1)} className="w-32 h-32 rounded-full bg-white/5 border border-white/10 text-slate-400 text-5xl active:scale-90 transition-all">—</button>
-                       <span className={`text-[280px] font-black text-white leading-none italic tabular-nums tracking-tighter ${isOtherWon ? 'opacity-20 scale-90' : 'opacity-100'}`}>{score}</span>
-                       <button disabled={isSetWon || isOtherWon} onClick={() => handleUpdateScore(activeSetIndex, displaySide as 1|2, 1)} className={`w-32 h-32 rounded-full flex items-center justify-center text-6xl text-white ${btnColor} active:scale-90 transition-all disabled:opacity-20`}>+</button>
+                <div key="side-2" className={`w-full md:flex-1 h-1/2 md:h-full rounded-[2rem] sm:rounded-[4rem] border-2 flex flex-col items-center justify-center relative transition-all duration-700 ${sideColor} p-4 sm:p-0`}>
+                  {isSetWon && <div className="absolute top-4 sm:top-12 bg-white text-emerald-900 px-4 sm:px-6 py-1 rounded-full font-black text-[8px] sm:text-[10px] uppercase tracking-widest animate-bounce">Set Winner</div>}
+                  <div className="text-center w-full px-6 sm:px-10">
+                    <h2 className={`text-2xl sm:text-5xl font-black text-white uppercase italic tracking-tighter mb-4 sm:mb-8 ${isOtherWon ? 'opacity-30' : 'opacity-100'} truncate`}>{team?.name}</h2>
+                    <div className="flex items-center justify-center space-x-4 sm:space-x-12">
+                       <button onClick={() => handleUpdateScore(activeSetIndex, displaySide as 1|2, -1)} className="w-12 h-12 sm:w-32 sm:h-32 rounded-full bg-white/5 border border-white/10 text-slate-400 text-xl sm:text-5xl active:scale-90 transition-all">—</button>
+                       <span className={`text-[100px] sm:text-[280px] font-black text-white leading-none italic tabular-nums tracking-tighter ${isOtherWon ? 'opacity-20 scale-90' : 'opacity-100'}`}>{score}</span>
+                       <button disabled={isSetWon || isOtherWon} onClick={() => handleUpdateScore(activeSetIndex, displaySide as 1|2, 1)} className={`w-12 h-12 sm:w-32 sm:h-32 rounded-full flex items-center justify-center text-2xl sm:text-6xl text-white ${btnColor} active:scale-90 transition-all disabled:opacity-20`}>+</button>
                     </div>
                   </div>
                 </div>
               );
             })()}
           </div>
-          <div className="px-10 py-10 flex items-center justify-between">
-            <button onClick={() => setIsSwapped(!isSwapped)} className="w-20 h-20 rounded-full bg-[#1a2333] border border-white/5 flex items-center justify-center text-slate-400 rotate-90 active:scale-90">
-               <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+          <div className="px-6 sm:px-10 py-6 sm:py-10 flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-0">
+            <button onClick={() => setIsSwapped(!isSwapped)} className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-[#1a2333] border border-white/5 flex items-center justify-center text-slate-400 rotate-90 active:scale-90">
+               <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             </button>
-            <div className="flex-1 max-w-2xl mx-10"><div className="bg-[#121931]/80 border border-white/5 rounded-[2.5rem] py-6 flex items-center justify-center shadow-inner"><span className="text-[12px] font-black text-slate-400 uppercase tracking-[0.5em] italic">Target: {scoringMatch.pointsOption} (Cap: {scoringMatch.goldenPoint})</span></div></div>
-            <div className="flex items-center space-x-4">
-               <input type="password" placeholder="PIN" className="w-32 bg-[#1a2333] border border-white/5 rounded-2xl p-5 text-center font-black text-white outline-none focus:border-indigo-500" value={pinEntry} onChange={e => setPinEntry(e.target.value)} />
-               <button onClick={handleSaveScore} className={`px-12 py-5 rounded-[2rem] font-black uppercase text-xs tracking-[0.2em] transition-all active:scale-95 ${matchWinner ? 'bg-emerald-500 text-white' : 'bg-[#4f46e5] text-white'}`}>{matchWinner ? 'Finalize Match' : 'Submit Update'}</button>
+            <div className="flex-1 w-full sm:max-w-2xl sm:mx-10">
+               <div className="bg-[#121931]/80 border border-white/5 rounded-2xl sm:rounded-[2.5rem] py-3 sm:py-6 flex items-center justify-center shadow-inner">
+                  <span className="text-[10px] sm:text-[12px] font-black text-slate-400 uppercase tracking-[0.3em] sm:tracking-[0.5em] italic">Target: {scoringMatch.pointsOption} (Cap: {scoringMatch.goldenPoint})</span>
+               </div>
+            </div>
+            <div className="flex items-center space-x-4 w-full sm:w-auto">
+               <input type="password" placeholder="PIN" className="w-20 sm:w-32 bg-[#1a2333] border border-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-5 text-center font-black text-white outline-none focus:border-indigo-500 text-xs sm:text-base" value={pinEntry} onChange={e => setPinEntry(e.target.value)} />
+               <button onClick={handleSaveScore} className={`flex-1 sm:flex-none px-6 sm:px-12 py-4 sm:py-5 rounded-[1.5rem] sm:rounded-[2rem] font-black uppercase text-[10px] sm:text-xs tracking-[0.2em] transition-all active:scale-95 ${matchWinner ? 'bg-emerald-500 text-white' : 'bg-[#4f46e5] text-white'}`}>{matchWinner ? 'Finalize Match' : 'Submit Update'}</button>
             </div>
           </div>
         </div>
@@ -910,7 +965,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
 };
 
 const TabButton = ({ active, onClick, label }: any) => (
-  <button onClick={onClick} className={`px-10 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${active ? 'bg-indigo-600 text-white shadow-2xl scale-105' : 'text-slate-400 hover:text-slate-600 bg-white shadow-sm border border-slate-100 hover:bg-slate-50'}`}>{label}</button>
+  <button onClick={onClick} className={`px-6 sm:px-10 py-3 sm:py-4 rounded-2xl sm:rounded-[1.5rem] text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${active ? 'bg-indigo-600 text-white shadow-2xl scale-105' : 'text-slate-400 hover:text-slate-600 bg-white shadow-sm border border-slate-100 hover:bg-slate-50'}`}>{label}</button>
 );
 
 export default TournamentDetails;
