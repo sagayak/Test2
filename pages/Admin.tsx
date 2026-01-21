@@ -98,7 +98,7 @@ const Admin: React.FC<AdminProps> = ({ user: currentUser }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex space-x-2 overflow-x-auto pb-2 no-scrollbar">
+      <div className="flex space-x-2 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
         <TabButton active={view === 'users'} onClick={() => setView('users')} label="User Database" />
         <TabButton active={view === 'requests'} onClick={() => setView('requests')} label="Credit Queue" count={requests.length} />
         <TabButton active={view === 'resets'} onClick={() => setView('resets')} label="Reset Tasks" count={resetRequests.length} />
@@ -108,51 +108,91 @@ const Admin: React.FC<AdminProps> = ({ user: currentUser }) => {
       {view === 'users' && (
         <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
            <div className="bg-slate-900 p-6 text-white text-[10px] font-black uppercase tracking-widest">Master User Ledger</div>
-           <table className="w-full text-left">
-              <thead className="bg-slate-800 text-white">
-                 <tr className="text-[9px] font-black uppercase tracking-[0.2em]">
-                    <th className="px-8 py-5">Full Profile</th>
-                    <th className="px-8 py-5">Role</th>
-                    <th className="px-8 py-5 text-center">Credit Balance</th>
-                    <th className="px-8 py-5 text-right">Actions</th>
-                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                 {users.map(u => (
-                   <tr key={u.id} className="hover:bg-indigo-50/50 transition-colors group">
-                      <td className="px-8 py-5">
-                        <div className="flex items-center space-x-3">
-                           <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center font-black text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">{u.name[0]}</div>
-                           <div>
-                              <p className="font-black text-slate-800 uppercase italic text-sm leading-none">{u.name}</p>
-                              <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-1">@{u.username}</p>
-                           </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-5">
-                         <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${u.role === UserRole.SUPERADMIN ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'}`}>
-                           {u.role}
-                         </span>
-                      </td>
-                      <td className="px-8 py-5 text-center font-black text-indigo-600 tabular-nums text-sm">{u.credits} CR</td>
-                      <td className="px-8 py-5 text-right">
-                         <div className="flex justify-end space-x-2">
-                           <button 
-                             onClick={() => setIsAdjusting(u)}
-                             className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all"
-                           >Top Up</button>
-                           {isSuperAdmin && u.id !== currentUser.id && (
-                             <button 
-                               onClick={() => handleDeleteUser(u)}
-                               className="bg-rose-50 text-rose-500 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all shadow-sm"
-                             >Delete</button>
-                           )}
-                         </div>
-                      </td>
+           
+           {/* Desktop Table View */}
+           <div className="hidden md:block overflow-x-auto">
+             <table className="w-full text-left min-w-[700px]">
+                <thead className="bg-slate-800 text-white">
+                   <tr className="text-[9px] font-black uppercase tracking-[0.2em]">
+                      <th className="px-8 py-5">Full Profile</th>
+                      <th className="px-8 py-5">Role</th>
+                      <th className="px-8 py-5 text-center">Credit Balance</th>
+                      <th className="px-8 py-5 text-right">Actions</th>
                    </tr>
-                 ))}
-              </tbody>
-           </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                   {users.map(u => (
+                     <tr key={u.id} className="hover:bg-indigo-50/50 transition-colors group">
+                        <td className="px-8 py-5">
+                          <div className="flex items-center space-x-3">
+                             <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center font-black text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">{u.name[0]}</div>
+                             <div>
+                                <p className="font-black text-slate-800 uppercase italic text-sm leading-none">{u.name}</p>
+                                <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-1">@{u.username}</p>
+                             </div>
+                          </div>
+                        </td>
+                        <td className="px-8 py-5">
+                           <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${u.role === UserRole.SUPERADMIN ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'}`}>
+                             {u.role}
+                           </span>
+                        </td>
+                        <td className="px-8 py-5 text-center font-black text-indigo-600 tabular-nums text-sm">{u.credits} CR</td>
+                        <td className="px-8 py-5 text-right">
+                           <div className="flex justify-end space-x-2">
+                             <button 
+                               onClick={() => setIsAdjusting(u)}
+                               className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all"
+                             >Top Up</button>
+                             {isSuperAdmin && u.id !== currentUser.id && (
+                               <button 
+                                 onClick={() => handleDeleteUser(u)}
+                                 className="bg-rose-50 text-rose-500 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all shadow-sm"
+                               >Delete</button>
+                             )}
+                           </div>
+                        </td>
+                     </tr>
+                   ))}
+                </tbody>
+             </table>
+           </div>
+
+           {/* Mobile Card View */}
+           <div className="md:hidden divide-y divide-slate-100">
+             {users.map(u => (
+               <div key={u.id} className="p-6 space-y-4">
+                 <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                       <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center font-black text-indigo-400">{u.name[0]}</div>
+                       <div>
+                          <p className="font-black text-slate-800 uppercase italic text-sm leading-none">{u.name}</p>
+                          <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mt-1">@{u.username}</p>
+                       </div>
+                    </div>
+                    <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${u.role === UserRole.SUPERADMIN ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'}`}>
+                      {u.role}
+                    </span>
+                 </div>
+                 <div className="bg-slate-50 p-4 rounded-2xl flex items-center justify-between border border-slate-100">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Balance</span>
+                    <span className="font-black text-indigo-600 tabular-nums text-sm">{u.credits} CR</span>
+                 </div>
+                 <div className="flex space-x-2 pt-2">
+                    <button 
+                      onClick={() => setIsAdjusting(u)}
+                      className="flex-1 bg-indigo-600 text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg"
+                    >Top Up Credits</button>
+                    {isSuperAdmin && u.id !== currentUser.id && (
+                      <button 
+                        onClick={() => handleDeleteUser(u)}
+                        className="bg-rose-50 text-rose-500 px-6 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                      >Delete</button>
+                    )}
+                 </div>
+               </div>
+             ))}
+           </div>
         </div>
       )}
 
@@ -202,40 +242,71 @@ const Admin: React.FC<AdminProps> = ({ user: currentUser }) => {
       {view === 'tournaments' && (
         <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
            <div className="bg-slate-900 p-6 text-white text-[10px] font-black uppercase tracking-widest">Active Arena Index</div>
-           <table className="w-full text-left">
-              <thead className="bg-slate-800 text-white">
-                 <tr className="text-[9px] font-black uppercase tracking-[0.2em]">
-                    <th className="px-8 py-5">Arena Profile</th>
-                    <th className="px-8 py-5">Organizer</th>
-                    <th className="px-8 py-5">Access Mode</th>
-                    <th className="px-8 py-5 text-right">Action</th>
-                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                 {tournaments.map(t => (
-                   <tr key={t.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-8 py-5">
-                         <p className="font-black text-slate-800 uppercase italic text-sm leading-none">{t.name}</p>
-                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">ID: {t.uniqueId}</p>
-                      </td>
-                      <td className="px-8 py-5">
-                         <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{users.find(u => u.id === t.organizerId)?.name || 'Unknown'}</p>
-                      </td>
-                      <td className="px-8 py-5">
-                         <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${t.isPublic ? 'bg-indigo-50 text-indigo-500 border border-indigo-100' : 'bg-slate-100 text-slate-400'}`}>
-                           {t.isPublic ? 'Open Access' : 'Protected'}
-                         </span>
-                      </td>
-                      <td className="px-8 py-5 text-right">
-                         <button 
-                           onClick={() => handleDeleteTournament(t.id, t.name)}
-                           className="bg-rose-50 text-rose-500 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all"
-                         >Dismantle</button>
-                      </td>
+           
+           {/* Desktop Table View */}
+           <div className="hidden md:block overflow-x-auto">
+             <table className="w-full text-left min-w-[700px]">
+                <thead className="bg-slate-800 text-white">
+                   <tr className="text-[9px] font-black uppercase tracking-[0.2em]">
+                      <th className="px-8 py-5">Arena Profile</th>
+                      <th className="px-8 py-5">Organizer</th>
+                      <th className="px-8 py-5">Access Mode</th>
+                      <th className="px-8 py-5 text-right">Action</th>
                    </tr>
-                 ))}
-              </tbody>
-           </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                   {tournaments.map(t => (
+                     <tr key={t.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-8 py-5">
+                           <p className="font-black text-slate-800 uppercase italic text-sm leading-none">{t.name}</p>
+                           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">ID: {t.uniqueId}</p>
+                        </td>
+                        <td className="px-8 py-5">
+                           <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{users.find(u => u.id === t.organizerId)?.name || 'Unknown'}</p>
+                        </td>
+                        <td className="px-8 py-5">
+                           <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${t.isPublic ? 'bg-indigo-50 text-indigo-500 border border-indigo-100' : 'bg-slate-100 text-slate-400'}`}>
+                             {t.isPublic ? 'Open Access' : 'Protected'}
+                           </span>
+                        </td>
+                        <td className="px-8 py-5 text-right">
+                           <button 
+                             onClick={() => handleDeleteTournament(t.id, t.name)}
+                             className="bg-rose-50 text-rose-500 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all"
+                           >Dismantle</button>
+                        </td>
+                     </tr>
+                   ))}
+                </tbody>
+             </table>
+           </div>
+
+           {/* Mobile Card View */}
+           <div className="md:hidden divide-y divide-slate-100">
+              {tournaments.map(t => (
+                <div key={t.id} className="p-6 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-black text-slate-800 uppercase italic text-sm leading-none">{t.name}</p>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">ID: {t.uniqueId}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${t.isPublic ? 'bg-indigo-50 text-indigo-500 border border-indigo-100' : 'bg-slate-100 text-slate-400'}`}>
+                      {t.isPublic ? 'Public' : 'Private'}
+                    </span>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl flex items-center justify-between border border-slate-100">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Organizer</span>
+                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest truncate max-w-[150px]">
+                      {users.find(u => u.id === t.organizerId)?.name || 'Unknown'}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => handleDeleteTournament(t.id, t.name)}
+                    className="w-full bg-rose-50 text-rose-500 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                  >Dismantle Arena</button>
+                </div>
+              ))}
+           </div>
         </div>
       )}
 
@@ -299,7 +370,7 @@ const Admin: React.FC<AdminProps> = ({ user: currentUser }) => {
 const TabButton = ({ active, onClick, label, count }: any) => (
   <button 
     onClick={onClick} 
-    className={`px-10 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center space-x-3 shrink-0 ${active ? 'bg-indigo-600 text-white shadow-2xl scale-105' : 'text-slate-400 hover:text-slate-900 bg-white border border-slate-200'}`}
+    className={`px-6 md:px-10 py-4 rounded-[1.2rem] md:rounded-[1.5rem] text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all flex items-center space-x-3 shrink-0 ${active ? 'bg-indigo-600 text-white shadow-2xl scale-105' : 'text-slate-400 hover:text-slate-900 bg-white border border-slate-200'}`}
   >
     <span>{label}</span>
     {count !== undefined && <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black ${active ? 'bg-white text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>{count}</span>}
