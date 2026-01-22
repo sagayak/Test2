@@ -303,14 +303,14 @@ const QuickScore: React.FC<QuickScoreProps> = ({ user, onUpdateUser }) => {
         <div className="absolute inset-0 z-[1000] bg-indigo-600/90 backdrop-blur-xl flex flex-col items-center justify-center p-10 text-center animate-in zoom-in duration-500">
            <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center text-6xl mb-8 animate-bounce shadow-2xl">🏆</div>
            <h2 className="text-[10px] font-black text-white uppercase tracking-[1em] mb-4 italic opacity-80">Official Announcement</h2>
-           <h1 className="text-6xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none mb-6">
+           <h1 className="text-6xl md:text-9xl font-black text-white uppercase italic tracking-tighter leading-none mb-6 drop-shadow-2xl">
              {matchWinner === 1 ? team1 : team2}
            </h1>
-           <p className="text-2xl font-black text-white uppercase tracking-widest italic mb-12 border-y-2 border-white/20 py-4 px-10">
-             Match Victory
+           <p className="text-2xl font-black text-white uppercase tracking-[0.5em] italic mb-12 border-y-4 border-white py-6 px-12">
+             MATCH CHAMPION
            </p>
-           <button onClick={() => setGameState('setup')} className="bg-white text-indigo-600 px-12 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-2xl hover:scale-110 active:scale-95 transition-all">
-             Exit to Setup
+           <button onClick={() => setGameState('setup')} className="bg-white text-indigo-600 px-16 py-6 rounded-full font-black uppercase tracking-widest text-sm shadow-2xl hover:scale-110 active:scale-95 transition-all">
+             Return to Lobby
            </button>
         </div>
       )}

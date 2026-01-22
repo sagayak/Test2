@@ -266,14 +266,17 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
   const generateCapture = async () => {
     if (!exportRef.current) return null;
     setIsExporting(true);
-    // Temporarily hide buttons for capture
+    // Temporarily hide buttons and certain UI elements for capture
     const buttons = exportRef.current.querySelectorAll('button');
     buttons.forEach(b => (b.style.display = 'none'));
     
+    // Create a high-quality capture
     const canvas = await html2canvas(exportRef.current, {
-      scale: 2,
+      scale: 3, // Increased scale for crispness
       useCORS: true,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      logging: false,
+      windowWidth: 1200 // Force a desktop-like width for the capture to avoid mobile layout shifting
     });
     
     buttons.forEach(b => (b.style.display = ''));
@@ -285,14 +288,23 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
     const canvas = await generateCapture();
     if (!canvas) return;
     
-    const imgData = canvas.toDataURL('image/jpeg', 1.0);
-    const pdf = new jsPDF({
-      orientation: 'p',
-      unit: 'px',
-      format: [canvas.width, canvas.height]
-    });
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const ratio = canvas.width / canvas.height;
     
-    pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+    // Scale image to fit A4 width
+    let finalWidth = pageWidth - 20; // 10mm margin
+    let finalHeight = finalWidth / ratio;
+    
+    // If height exceeds page height, scale to fit height instead
+    if (finalHeight > pageHeight - 20) {
+      finalHeight = pageHeight - 20;
+      finalWidth = finalHeight * ratio;
+    }
+    
+    pdf.addImage(imgData, 'JPEG', (pageWidth - finalWidth) / 2, 10, finalWidth, finalHeight);
     pdf.save(`${tournament.name}_Results.pdf`);
     setShowExportMenu(false);
   };
@@ -482,7 +494,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
           <div ref={exportRef} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-8 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-indigo-50/30 border-l-4 border-indigo-600">
               <div>
-                <h4 className="text-xl font-black text-indigo-900 uppercase italic tracking-tighter">Match Schedule</h4>
+                <h4 className="text-xl font-black text-indigo-900 uppercase italic tracking-tighter">Match Schedule & Results</h4>
                 {isExporting && <p className="text-[9px] font-black text-indigo-400 animate-pulse mt-1">GENERATING DOCUMENT...</p>}
               </div>
               <div className="relative w-full sm:w-auto">
@@ -491,7 +503,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
                   className="w-full sm:w-auto bg-white text-slate-500 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                  Export Results
+                  Export Data
                 </button>
                 {showExportMenu && (
                   <div className="absolute right-0 mt-2 w-full sm:w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 z-50 animate-in zoom-in duration-100">
@@ -508,37 +520,53 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
 
             {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left min-w-[700px]">
+              <table className="w-full text-left min-w-[850px]">
                 <thead className="bg-slate-950 text-white">
                   <tr className="text-[9px] font-black uppercase tracking-[0.2em]">
                     <th className="px-8 py-5">#</th>
                     <th className="px-8 py-5">Schedule</th>
                     <th className="px-8 py-5">Tie-Up</th>
+                    <th className="px-8 py-5">Winner</th>
                     <th className="px-8 py-5">Umpire</th>
                     <th className="px-8 py-5 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {matches.map((m, idx) => (
-                    <tr key={m.id} className="hover:bg-indigo-50/40 transition-colors group">
-                      <td className="px-8 py-6 font-black text-slate-300 group-hover:text-indigo-600 transition-colors">#{idx+1}</td>
-                      <td className="px-8 py-6 font-bold text-slate-600 text-[11px] whitespace-nowrap">{format12h(m.startTime)}</td>
-                      <td className="px-8 py-6 font-black text-slate-800 uppercase italic text-sm">
-                        {teams.find(t => t.id === m.participants[0])?.name} vs {teams.find(t => t.id === m.participants[1])?.name}
-                        <div className="text-[9px] text-indigo-500 mt-1 font-bold">
-                          {m.status === MatchStatus.COMPLETED ? m.scores.map(s => `${s.s1}-${s.s2}`).join(' / ') : 'SCHEDULED'}
-                        </div>
-                      </td>
-                      <td className="px-8 py-6 text-xs font-bold text-slate-500">{m.umpireName || '---'}</td>
-                      <td className="px-8 py-6 text-right">
-                         {m.status !== MatchStatus.COMPLETED ? (
-                           <button onClick={() => handleOpenScoreboard(m)} className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg active:scale-95 transition-all">Score</button>
-                         ) : (
-                           <span className="text-emerald-500 font-black text-[9px] uppercase italic">Finished</span>
-                         )}
-                      </td>
-                    </tr>
-                  ))}
+                  {matches.map((m, idx) => {
+                    const team1 = teams.find(t => t.id === m.participants[0]);
+                    const team2 = teams.find(t => t.id === m.participants[1]);
+                    const winner = m.winnerId ? teams.find(t => t.id === m.winnerId) : null;
+                    return (
+                      <tr key={m.id} className="hover:bg-indigo-50/40 transition-colors group">
+                        <td className="px-8 py-6 font-black text-slate-300 group-hover:text-indigo-600 transition-colors">#{idx+1}</td>
+                        <td className="px-8 py-6 font-bold text-slate-600 text-[11px] whitespace-nowrap">{format12h(m.startTime)}</td>
+                        <td className="px-8 py-6 font-black text-slate-800 uppercase italic text-sm">
+                          {team1?.name} vs {team2?.name}
+                          <div className="text-[9px] text-indigo-500 mt-1 font-bold">
+                            {m.status === MatchStatus.COMPLETED ? m.scores.map(s => `${s.s1}-${s.s2}`).join(' / ') : 'SCHEDULED'}
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                           {winner ? (
+                             <div className="flex items-center space-x-2">
+                               <span className="bg-emerald-500 text-white text-[8px] font-black uppercase px-2 py-1 rounded-md italic">WINNER</span>
+                               <span className="text-[11px] font-black text-emerald-600 uppercase italic">{winner.name}</span>
+                             </div>
+                           ) : (
+                             <span className="text-[9px] font-bold text-slate-300 uppercase italic tracking-widest">---</span>
+                           )}
+                        </td>
+                        <td className="px-8 py-6 text-xs font-bold text-slate-500">{m.umpireName || '---'}</td>
+                        <td className="px-8 py-6 text-right">
+                           {m.status !== MatchStatus.COMPLETED ? (
+                             <button onClick={() => handleOpenScoreboard(m)} className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg active:scale-95 transition-all">Score</button>
+                           ) : (
+                             <span className="text-emerald-500 font-black text-[9px] uppercase italic">Finished</span>
+                           )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -548,6 +576,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
               {matches.map((m, idx) => {
                 const team1 = teams.find(t => t.id === m.participants[0]);
                 const team2 = teams.find(t => t.id === m.participants[1]);
+                const winner = m.winnerId ? teams.find(t => t.id === m.winnerId) : null;
                 return (
                   <div key={m.id} className="p-6 bg-white space-y-4">
                     <div className="flex justify-between items-center">
@@ -556,8 +585,8 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
                     </div>
                     <div className="flex items-center justify-between gap-2">
                        <div className="flex-1">
-                          <h5 className="font-black text-slate-800 uppercase italic text-sm tracking-tight truncate">{team1?.name}</h5>
-                          <h5 className="font-black text-slate-800 uppercase italic text-sm tracking-tight truncate mt-1">{team2?.name}</h5>
+                          <h5 className={`font-black uppercase italic text-sm tracking-tight truncate ${winner?.id === team1?.id ? 'text-emerald-600' : 'text-slate-800'}`}>{team1?.name} {winner?.id === team1?.id && '🏆'}</h5>
+                          <h5 className={`font-black uppercase italic text-sm tracking-tight truncate mt-1 ${winner?.id === team2?.id ? 'text-emerald-600' : 'text-slate-800'}`}>{team2?.name} {winner?.id === team2?.id && '🏆'}</h5>
                        </div>
                        <div className="flex flex-col items-center justify-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Status</span>
@@ -567,10 +596,19 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
                        </div>
                     </div>
                     {m.status === MatchStatus.COMPLETED && (
-                      <div className="bg-indigo-50 p-2 rounded-lg text-center">
-                         <span className="text-[10px] font-black text-indigo-700 font-mono">
-                            {m.scores.map(s => `${s.s1}-${s.s2}`).join(' / ')}
-                         </span>
+                      <div className="bg-indigo-50 p-3 rounded-xl space-y-2 border border-indigo-100">
+                         <div className="flex justify-between items-center">
+                            <span className="text-[8px] font-black text-indigo-300 uppercase tracking-widest">Match Result</span>
+                            <span className="text-[10px] font-black text-indigo-700 font-mono">
+                                {m.scores.map(s => `${s.s1}-${s.s2}`).join(' / ')}
+                            </span>
+                         </div>
+                         {winner && (
+                           <div className="text-center pt-1 border-t border-indigo-200/40">
+                              <p className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-1">Victory For</p>
+                              <p className="text-[11px] font-black text-emerald-600 uppercase italic tracking-tight">{winner.name}</p>
+                           </div>
+                         )}
                       </div>
                     )}
                     <div className="flex justify-between items-center pt-2">
@@ -582,7 +620,7 @@ const TournamentDetails: React.FC<Props> = ({ tournament: initialTournament, use
                            Score Match
                          </button>
                        ) : (
-                         <span className="text-emerald-500 font-black text-[10px] uppercase italic">Match Finished</span>
+                         <span className="text-emerald-500 font-black text-[10px] uppercase italic">Finalized</span>
                        )}
                     </div>
                   </div>
