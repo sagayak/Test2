@@ -40,6 +40,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, activeTab, se
         <div className="hidden md:flex flex-col space-y-2 flex-grow">
           <NavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon="📊" label="Dashboard" />
           <NavItem active={activeTab === 'tournaments'} onClick={() => setActiveTab('tournaments')} icon="🏆" label="Tournaments" />
+          <NavItem active={activeTab === 'quick-score'} onClick={() => setActiveTab('quick-score')} icon="⚡" label="Quick Score" />
           {user?.role !== UserRole.PLAYER && (
             <NavItem active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} icon="⚙️" label="Admin Panel" />
           )}
@@ -62,7 +63,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, activeTab, se
       <main className="flex-grow p-4 md:p-8 overflow-y-auto">
         <header className="flex justify-between items-center mb-8 bg-white/50 p-4 rounded-2xl border border-slate-200 backdrop-blur-sm">
           <div>
-            <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tighter italic">{activeTab}</h2>
+            <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tighter italic">{activeTab.replace(/-/g, ' ')}</h2>
           </div>
           <div className="flex items-center space-x-4">
             <div className="bg-indigo-600 px-4 py-2 rounded-xl shadow-lg shadow-indigo-100 flex items-center space-x-2">
@@ -80,6 +81,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, activeTab, se
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around p-3 z-50">
           <MobileIcon active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon="📊" />
           <MobileIcon active={activeTab === 'tournaments'} onClick={() => setActiveTab('tournaments')} icon="🏆" />
+          <MobileIcon active={activeTab === 'quick-score'} onClick={() => setActiveTab('quick-score')} icon="⚡" />
           {user?.role !== UserRole.PLAYER && (
             <MobileIcon active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} icon="⚙️" />
           )}

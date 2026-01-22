@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Tournaments from './pages/Tournaments';
 import Admin from './pages/Admin';
+import QuickScore from './pages/QuickScore';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -164,6 +165,9 @@ const App: React.FC = () => {
     <Layout user={currentUser} onLogout={handleLogout} activeTab={activeTab} setActiveTab={setActiveTab}>
       {activeTab === 'dashboard' && currentUser && <Dashboard user={currentUser} />}
       {activeTab === 'tournaments' && currentUser && <Tournaments user={currentUser} initialJoinId={pendingJoinId} />}
+      {activeTab === 'quick-score' && currentUser && (
+        <QuickScore user={currentUser} onUpdateUser={(updated) => setCurrentUser(updated)} />
+      )}
       {activeTab === 'admin' && currentUser && <Admin user={currentUser} />}
       {activeTab === 'profile' && (
         <div className="space-y-8 animate-in slide-in-from-bottom duration-500">
